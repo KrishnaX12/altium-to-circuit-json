@@ -26,12 +26,12 @@ import type {
   PcbSilkscreenLine,
   PcbSilkscreenPath,
   PcbSilkscreenRect,
-  PcbSilkscreenText,
   PcbSmtPad,
   PcbTrace,
   PcbVia,
 } from "circuit-json"
 import { convertAltiumCopperAreas } from "./pcb/convert-altium-copper-areas"
+import { convertAltiumSilkscreenText } from "./pcb/convert-altium-silkscreen-text"
 import { getPreferredPcbBoardOutline } from "./pcb/get-board-outline"
 import { mapAltiumCopperLayer } from "./pcb/map-altium-copper-layer"
 import { stitchConnectedAltiumPaths } from "./pcb/stitch-connected-paths"
@@ -146,7 +146,12 @@ export function convertAltiumPcbDocToCircuitJson(
       const rect = convertSilkscreenFill(record, index)
       if (rect) elements.push(rect)
     } else if (record instanceof AltiumTextRecord) {
-      const text = convertSilkscreenText(record, index)
+      const text = convertAltiumSilkscreenText({
+        document,
+        pcbComponentId: pcbComponentIdForRecord(record),
+        record,
+        recordIndex: index,
+      })
       if (text) elements.push(text)
     }
   }
@@ -672,40 +677,6 @@ function convertSilkscreenFill(
   }
 }
 
-function convertSilkscreenText(
-  record: AltiumTextRecord,
-  index: number,
-): PcbSilkscreenText | undefined {
-  const text =
-    decodeAltiumWideString(record.getDecoded("WIDESTRING")) ||
-    record.getDecoded("TEXT") ||
-    record.text
-  if (!record.position || !text) return undefined
-  return {
-    type: "pcb_silkscreen_text",
-    pcb_silkscreen_text_id: `pcb_silkscreen_text_altium_${index}`,
-    pcb_component_id: pcbComponentIdForRecord(record),
-    text,
-    font: "tscircuit2024",
-    font_size: milsToMillimeters(record.heightMils ?? 30),
-    anchor_position: toMillimeterPoint(record.position),
-    anchor_alignment: mapTextAnchor(record.justification),
-    ccw_rotation: record.rotation,
-    layer: mapOverlayLayer(record.layer),
-    is_mirrored: record.mirrored,
-  }
-}
-
-function decodeAltiumWideString(raw: string | undefined): string {
-  if (!raw) return ""
-  if (!/^\d+(?:,\d+)*$/u.test(raw)) return raw
-  try {
-    return String.fromCodePoint(...raw.split(",").map(Number))
-  } catch {
-    return raw
-  }
-}
-
 function pcbComponentIdForRecord(record: AltiumRecord): string {
   const index = record.getNumber("COMPONENT")
   return index === undefined || index < 0
@@ -715,16 +686,6 @@ function pcbComponentIdForRecord(record: AltiumRecord): string {
 
 function componentId(index: number): string {
   return `pcb_component_altium_${index}`
-}
-
-function mapTextAnchor(
-  justification: string | undefined,
-): "bottom_left" | "bottom_center" | "bottom_right" | "center" {
-  const normalized = justification?.replace(/[\s_-]+/gu, "").toUpperCase()
-  if (normalized?.includes("CENTER")) return "bottom_center"
-  if (normalized?.includes("RIGHT")) return "bottom_right"
-  if (normalized?.includes("LEFT")) return "bottom_left"
-  return "center"
 }
 
 function isOverlayLayer(layer: string | undefined): boolean {

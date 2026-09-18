@@ -945,17 +945,23 @@ function convertSilkscreenText(
     record.getDecoded("TEXT") ||
     record.text
   if (!record.position || !text) return undefined
+  const layer = mapOverlayLayer(record.layer)
   return {
     type: "pcb_silkscreen_text",
     pcb_silkscreen_text_id: `pcb_silkscreen_text_altium_${index}`,
     pcb_component_id: pcbComponentIdForRecord(record),
-    text,
+    text:
+      text === ".Layer_Name"
+        ? layer === "bottom"
+          ? "Bottom Overlay"
+          : "Top Overlay"
+        : text,
     font: "tscircuit2024",
     font_size: milsToMillimeters(record.heightMils ?? 30),
     anchor_position: toMillimeterPoint(record.position),
     anchor_alignment: mapTextAnchor(record.justification),
     ccw_rotation: record.rotation,
-    layer: mapOverlayLayer(record.layer),
+    layer,
     is_mirrored: record.mirrored,
   }
 }

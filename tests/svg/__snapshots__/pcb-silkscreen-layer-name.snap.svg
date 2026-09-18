@@ -1,0 +1,14 @@
+<svg width="1624" height="372.7636849132176" viewBox="0 0 1624 372.7636849132176" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-label=".Layer_Name resolution: altiumts source on left, Circuit JSON on right" role="img">
+  <g transform="translate(0, 0) scale(1.0680907877169559, 1.0680907877169559) translate(0, 0)">
+    <title>Altium layer name</title>
+  <rect width="749" height="349" fill="#071a16" x="0" y="0"/>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <polygon data-record="BoardOutline" points="24.5,324.5 724.5,324.5 724.5,24.5 24.5,24.5" fill="#123d32" stroke="#6ee7b7" stroke-width="3"/>
+    <text data-record="Text" data-layer="TOPOVERLAY" x="0" y="0" fill="#f8fafc" font-family="Arial, sans-serif" font-size="40" font-weight="normal" font-style="normal" text-anchor="start" dominant-baseline="text-after-edge" transform="translate(374.5 124.5) rotate(0) scale(1 1)">.Layer_Name</text>
+    <text data-record="Text" data-layer="TOPOVERLAY" x="0" y="0" fill="#f8fafc" font-family="Arial, sans-serif" font-size="40" font-weight="normal" font-style="normal" text-anchor="start" dominant-baseline="text-after-edge" transform="translate(374.5 224.5) rotate(0) scale(1 1)">Layer: &apos;.Layer_Name&apos;</text>
+  </g>
+  </g>
+  <g transform="translate(824, 14.953271028037364) scale(1, 1) translate(0, 0)">
+    <style></style><rect class="boundary" x="0" y="0" fill="#000" width="800" height="342.8571428571429" data-type="pcb_background" data-pcb-layer="global"/><rect class="pcb-boundary" fill="none" stroke="#fff" stroke-width="0.3" x="83.16008316008322" y="35.64003564003565" width="633.6798336798336" height="271.5770715770716" data-type="pcb_boundary" data-pcb-layer="global"/><path class="pcb-board" d="M 83.16008316008322 307.21710721710724 L 716.8399168399168 307.21710721710724 L 716.8399168399168 35.64003564003565 L 83.16008316008322 35.64003564003565 Z" fill="none" stroke="rgba(255, 255, 255, 0.5)" stroke-width="3.5640035640035643" data-type="pcb_board" data-pcb-layer="board"/><text x="0" y="0" dx="0" dy="0" fill="#f2eda1" font-family="Arial, sans-serif" font-size="36.21027621027621" text-anchor="middle" dominant-baseline="text-after-edge" transform="matrix(1,0,0,1,400,126.16572616572617)" class="pcb-silkscreen-text pcb-silkscreen-top" data-pcb-silkscreen-text-id="pcb_silkscreen_text_altium_1__stack1" stroke="none" data-type="pcb_silkscreen_text" data-pcb-layer="top">Top Overlay</text><text x="0" y="0" dx="0" dy="0" fill="#f2eda1" font-family="Arial, sans-serif" font-size="36.21027621027621" text-anchor="middle" dominant-baseline="text-after-edge" transform="matrix(1,0,0,1,400,216.6914166914167)" class="pcb-silkscreen-text pcb-silkscreen-top" data-pcb-silkscreen-text-id="pcb_silkscreen_text_altium_2__stack1" stroke="none" data-type="pcb_silkscreen_text" data-pcb-layer="top">Layer: Top Overlay</text>
+  </g>
+</svg>

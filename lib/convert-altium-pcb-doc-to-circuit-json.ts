@@ -44,6 +44,7 @@ import {
 } from "./pcb/get-altium-pad-geometry"
 import { getPreferredPcbBoardOutline } from "./pcb/get-board-outline"
 import { mapAltiumCopperLayer } from "./pcb/map-altium-copper-layer"
+import { resolveAltiumSpecialStrings } from "./pcb/resolve-altium-special-strings"
 import { stitchConnectedAltiumPaths } from "./pcb/stitch-connected-paths"
 
 const MILS_TO_MILLIMETERS = 0.0254
@@ -197,7 +198,16 @@ export function convertAltiumPcbDocToCircuitJson(
       if (isOverlayLayer(record.layer)) {
         if (options.includeSilkscreen === false) continue
         const text = convertSilkscreenText(record, index)
-        if (text) elements.push(text)
+        if (text) {
+          elements.push({
+            ...text,
+            text: resolveAltiumSpecialStrings({
+              document,
+              record,
+              sourceText: text.text,
+            }),
+          })
+        }
       } else {
         const text = convertCopperText(record, index)
         if (text) elements.push(text)

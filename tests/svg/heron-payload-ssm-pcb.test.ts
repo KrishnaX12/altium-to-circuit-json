@@ -12,6 +12,8 @@ test(
       })
 
     expectValidImportedPcb({ circuitJson, circuitJsonSvg })
+    expect(circuitJsonSvg).toMatch(/data-pcb-layer="bottom"/u)
+    expect(circuitJsonSvg).toMatch(/data-pcb-layer="top"/u)
     await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
   },
   { timeout: 40_000 },

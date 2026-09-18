@@ -6,7 +6,7 @@ import {
   serializeAltiumPcbToSvg,
 } from "altiumts"
 import type { AnyCircuitElement } from "circuit-json"
-import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
+import { colorMap, convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { convertAltiumToCircuitJson } from "../../lib"
 import { readReferenceBytes } from "./read-reference"
 import { stackAltiumAndCircuitJsonSvgs } from "./stack-svg-comparison"
@@ -15,6 +15,18 @@ interface OpenSourcePcbComparison {
   circuitJson: AnyCircuitElement[]
   circuitJsonSvg: string
   comparisonSvg: string
+}
+
+const INNER_COPPER_OPACITY = 0.25
+const INNER_COPPER_COLORS = {
+  inner1: withOpacity(colorMap.board.copper.in1, INNER_COPPER_OPACITY),
+  inner2: withOpacity(colorMap.board.copper.in2, INNER_COPPER_OPACITY),
+  inner3: withOpacity(colorMap.board.copper.in3, INNER_COPPER_OPACITY),
+  inner4: withOpacity(colorMap.board.copper.in4, INNER_COPPER_OPACITY),
+  inner5: withOpacity(colorMap.board.copper.in5, INNER_COPPER_OPACITY),
+  inner6: withOpacity(colorMap.board.copper.in6, INNER_COPPER_OPACITY),
+  inner7: withOpacity(colorMap.board.copper.in7, INNER_COPPER_OPACITY),
+  inner8: withOpacity(colorMap.board.copper.in8, INNER_COPPER_OPACITY),
 }
 
 export async function createOpenSourcePcbComparison({
@@ -67,6 +79,9 @@ export async function createOpenSourcePcbComparison({
     width: 800,
   })
   const circuitJsonSvg = convertCircuitJsonToPcbSvg(circuitJson, {
+    colorOverrides: {
+      copper: INNER_COPPER_COLORS,
+    },
     matchBoardAspectRatio: true,
     viewportTarget: focusOnBoard
       ? { pcb_board_id: board.pcb_board_id }
@@ -79,4 +94,9 @@ export async function createOpenSourcePcbComparison({
   })
 
   return { circuitJson, circuitJsonSvg, comparisonSvg }
+}
+
+function withOpacity(rgbColor: string, opacity: number): string {
+  const rgbChannels = /^rgb\(([^)]+)\)$/u.exec(rgbColor)?.[1]
+  return rgbChannels ? `rgba(${rgbChannels}, ${opacity})` : rgbColor
 }

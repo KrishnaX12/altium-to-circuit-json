@@ -53,7 +53,6 @@ export async function createOpenSourcePcbComparison({
       ) * 0.05
     : 0
   const altiumSvg = serializeAltiumPcbToSvg(document, {
-    height: 600,
     title: "altiumts source rendering",
     viewBox:
       focusOnBoard && boardBounds

@@ -17,6 +17,7 @@ test("honors component designator and comment visibility", () => {
       "|RECORD=Text|COMPONENT=2|LAYER=TOPOVERLAY|X=50mil|Y=10mil|HEIGHT=10mil|TEXT=U3|DESIGNATOR=TRUE",
       "|RECORD=Text|COMPONENT=2|LAYER=TOPOVERLAY|X=60mil|Y=10mil|HEIGHT=10mil|TEXT=MCU|COMMENT=TRUE",
       "|RECORD=Text|COMPONENT=65535|LAYER=TOPOVERLAY|X=70mil|Y=10mil|HEIGHT=10mil|TEXT=BOARD LABEL",
+      "|RECORD=Text|COMPONENT=0|LAYER=TOPOVERLAY|X=80mil|Y=10mil|HEIGHT=10mil|TEXT=BOTH FLAGS|DESIGNATOR=TRUE|COMMENT=TRUE",
     ].join("\n"),
   )
 
@@ -36,5 +37,6 @@ test("honors component designator and comment visibility", () => {
     { text: "U3", isHidden: false },
     { text: "MCU", isHidden: false },
     { text: "BOARD LABEL", isHidden: false },
+    { text: "BOTH FLAGS", isHidden: true },
   ])
 })

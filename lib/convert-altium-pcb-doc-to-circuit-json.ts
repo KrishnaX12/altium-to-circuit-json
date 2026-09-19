@@ -1032,8 +1032,12 @@ function isSilkscreenTextHidden(
 ): boolean {
   const component = document.getComponentForRecord(record)
   if (!component) return false
-  if (record.isDesignator) return component.getBoolean("NAMEON") === false
-  if (record.isComment) return component.getBoolean("COMMENTON") === false
+  if (record.isDesignator && component.getBoolean("NAMEON") === false) {
+    return true
+  }
+  if (record.isComment && component.getBoolean("COMMENTON") === false) {
+    return true
+  }
   return false
 }
 

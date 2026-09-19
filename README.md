@@ -48,6 +48,7 @@ PCB conversion currently emits:
 - top, bottom, and inner-layer copper tracks;
 - vias;
 - circular, rectangular, rounded, octagonal, rotated, pill, slotted, plated, and non-plated pads/holes;
+- bottom-layer solder-paste pads and fills;
 - top and bottom silkscreen lines, arcs, fills, and text; and
 - Altium mil coordinates converted to millimeters.
 

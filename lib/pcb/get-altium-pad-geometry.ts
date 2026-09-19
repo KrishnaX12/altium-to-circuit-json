@@ -98,8 +98,8 @@ export function getAltiumSlotHoleSize(record: AltiumPadRecord): {
 }
 
 function getPadLayerOrdinal(record: AltiumPadRecord): number {
-  const normalizedLayer = record.layer?.replaceAll(" ", "").toUpperCase()
-  return normalizedLayer === "BOTTOM" || normalizedLayer === "BOTTOMLAYER"
+  const normalizedLayer = record.layer?.replace(/[\s_.-]+/gu, "").toUpperCase()
+  return normalizedLayer?.startsWith("BOTTOM")
     ? BOTTOM_LAYER_ORDINAL
     : TOP_LAYER_ORDINAL
 }

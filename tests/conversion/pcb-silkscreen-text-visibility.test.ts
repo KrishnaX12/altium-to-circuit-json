@@ -23,14 +23,20 @@ test("honors component designator and comment visibility", () => {
 
   const silkscreenText = convertAltiumPcbDocToCircuitJson(document)
     .filter((element) => element.type === "pcb_silkscreen_text")
-    .map((element) => element.text)
+    .map((element) => ({
+      isHidden: "is_hidden" in element && element.is_hidden === true,
+      text: element.text,
+    }))
 
   expect(silkscreenText).toEqual([
-    "R1",
-    "ASSEMBLY NOTE",
-    "22uF",
-    "U3",
-    "MCU",
-    "BOARD LABEL",
+    { text: "R1", isHidden: false },
+    { text: "10k", isHidden: true },
+    { text: "ASSEMBLY NOTE", isHidden: false },
+    { text: "C1", isHidden: true },
+    { text: "22uF", isHidden: false },
+    { text: "U3", isHidden: false },
+    { text: "MCU", isHidden: false },
+    { text: "BOARD LABEL", isHidden: false },
+    { text: "BOTH FLAGS", isHidden: true },
   ])
 })

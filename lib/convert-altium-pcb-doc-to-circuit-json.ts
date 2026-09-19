@@ -48,8 +48,8 @@ import { getPreferredPcbBoardOutline } from "./pcb/get-board-outline"
 import { mapAltiumCopperLayer } from "./pcb/map-altium-copper-layer"
 import { stitchConnectedAltiumPaths } from "./pcb/stitch-connected-paths"
 
-type PcbSilkscreenTextWithVisibility = PcbSilkscreenText & {
-  is_visible: boolean
+type PcbSilkscreenTextWithHidden = PcbSilkscreenText & {
+  is_hidden?: boolean
 }
 
 const MILS_TO_MILLIMETERS = 0.0254
@@ -1003,12 +1003,13 @@ function convertSilkscreenText(
   document: AltiumPcbDocument,
   record: AltiumTextRecord,
   index: number,
-): PcbSilkscreenTextWithVisibility | undefined {
+): PcbSilkscreenTextWithHidden | undefined {
   const text =
     decodeAltiumWideString(record.getDecoded("WIDESTRING")) ||
     record.getDecoded("TEXT") ||
     record.text
   if (!record.position || !text) return undefined
+  const isHidden = isSilkscreenTextHidden(document, record)
   return {
     type: "pcb_silkscreen_text",
     pcb_silkscreen_text_id: `pcb_silkscreen_text_altium_${index}`,
@@ -1021,19 +1022,19 @@ function convertSilkscreenText(
     ccw_rotation: record.rotation,
     layer: mapOverlayLayer(record.layer),
     is_mirrored: record.mirrored,
-    is_visible: getSilkscreenTextVisibility(document, record),
+    ...(isHidden ? { is_hidden: true } : {}),
   }
 }
 
-function getSilkscreenTextVisibility(
+function isSilkscreenTextHidden(
   document: AltiumPcbDocument,
   record: AltiumTextRecord,
 ): boolean {
   const component = document.getComponentForRecord(record)
-  if (!component) return true
-  if (record.isDesignator) return component.getBoolean("NAMEON") ?? true
-  if (record.isComment) return component.getBoolean("COMMENTON") ?? true
-  return true
+  if (!component) return false
+  if (record.isDesignator) return component.getBoolean("NAMEON") === false
+  if (record.isComment) return component.getBoolean("COMMENTON") === false
+  return false
 }
 
 function decodeAltiumWideString(raw: string | undefined): string {

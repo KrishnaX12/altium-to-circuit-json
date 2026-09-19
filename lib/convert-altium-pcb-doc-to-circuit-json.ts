@@ -48,10 +48,6 @@ import { getPreferredPcbBoardOutline } from "./pcb/get-board-outline"
 import { mapAltiumCopperLayer } from "./pcb/map-altium-copper-layer"
 import { stitchConnectedAltiumPaths } from "./pcb/stitch-connected-paths"
 
-type PcbSilkscreenTextWithHidden = PcbSilkscreenText & {
-  is_hidden?: boolean
-}
-
 const MILS_TO_MILLIMETERS = 0.0254
 const ALTIUM_SLOT_HOLE_TYPE = 2
 const BOARD_ID = "pcb_board_altium"
@@ -1003,13 +999,13 @@ function convertSilkscreenText(
   document: AltiumPcbDocument,
   record: AltiumTextRecord,
   index: number,
-): PcbSilkscreenTextWithHidden | undefined {
+): PcbSilkscreenText | undefined {
   const text =
     decodeAltiumWideString(record.getDecoded("WIDESTRING")) ||
     record.getDecoded("TEXT") ||
     record.text
   if (!record.position || !text) return undefined
-  const isHidden = isSilkscreenTextHidden(document, record)
+  if (isSilkscreenTextHidden(document, record)) return undefined
   return {
     type: "pcb_silkscreen_text",
     pcb_silkscreen_text_id: `pcb_silkscreen_text_altium_${index}`,
@@ -1022,7 +1018,6 @@ function convertSilkscreenText(
     ccw_rotation: record.rotation,
     layer: mapOverlayLayer(record.layer),
     is_mirrored: record.mirrored,
-    ...(isHidden ? { is_hidden: true } : {}),
   }
 }
 

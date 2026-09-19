@@ -5,16 +5,11 @@ import {
   AltiumTextRecord,
   parseAltiumFile,
 } from "altiumts"
-import type { PcbSilkscreenText } from "circuit-json"
 import { convertAltiumPcbDocToCircuitJson } from "../../lib"
 import { TI_POWER_REFERENCE_PCB_FILENAMES } from "../../scripts/references/reference-manifest"
 import { readReferenceBytes } from "../helpers/read-reference"
 
-type PcbSilkscreenTextWithHidden = PcbSilkscreenText & {
-  is_hidden?: boolean
-}
-
-test("preserves TI overlay text and its visibility", async () => {
+test("omits hidden TI component overlay text", async () => {
   const filename = TI_POWER_REFERENCE_PCB_FILENAMES.pmp23653PlanarTransformer
   const referenceBytes = await readReferenceBytes(filename)
   const parsedDocument = parseAltiumFile(referenceBytes).document
@@ -31,22 +26,12 @@ test("preserves TI overlay text and its visibility", async () => {
   )
   const silkscreenTexts = convertAltiumPcbDocToCircuitJson(
     parsedDocument,
-  ).filter(
-    (element): element is PcbSilkscreenTextWithHidden =>
-      element.type === "pcb_silkscreen_text",
-  )
+  ).filter((element) => element.type === "pcb_silkscreen_text")
 
   expect(expectedTextRecords).toHaveLength(14)
-  expect(silkscreenTexts).toHaveLength(14)
-  expect(
-    silkscreenTexts.filter((text) => text.is_hidden === true),
-  ).toHaveLength(9)
-  expect(silkscreenTexts.find((text) => text.text === "CORE1")?.is_hidden).toBe(
-    true,
-  )
-  expect(silkscreenTexts.find((text) => text.text === "J5")?.is_hidden).toBe(
-    undefined,
-  )
+  expect(silkscreenTexts).toHaveLength(5)
+  expect(silkscreenTexts.some((text) => text.text === "CORE1")).toBe(false)
+  expect(silkscreenTexts.some((text) => text.text === "J5")).toBe(true)
 })
 
 function isOverlayTextRecord(record: AltiumTextRecord): boolean {

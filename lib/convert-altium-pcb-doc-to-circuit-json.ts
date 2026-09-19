@@ -48,6 +48,10 @@ import { getPreferredPcbBoardOutline } from "./pcb/get-board-outline"
 import { mapAltiumCopperLayer } from "./pcb/map-altium-copper-layer"
 import { stitchConnectedAltiumPaths } from "./pcb/stitch-connected-paths"
 
+type PcbSilkscreenTextWithVisibility = PcbSilkscreenText & {
+  is_visible: boolean
+}
+
 const MILS_TO_MILLIMETERS = 0.0254
 const ALTIUM_SLOT_HOLE_TYPE = 2
 const BOARD_ID = "pcb_board_altium"
@@ -207,7 +211,7 @@ export function convertAltiumPcbDocToCircuitJson(
       if (isCourtyardLayer(record.layer)) continue
       if (isOverlayLayer(record.layer)) {
         if (options.includeSilkscreen === false) continue
-        const text = convertSilkscreenText(record, index)
+        const text = convertSilkscreenText(document, record, index)
         if (text) elements.push(text)
       } else {
         const text = convertCopperText(record, index)
@@ -996,9 +1000,10 @@ function convertSilkscreenRegion(
 }
 
 function convertSilkscreenText(
+  document: AltiumPcbDocument,
   record: AltiumTextRecord,
   index: number,
-): PcbSilkscreenText | undefined {
+): PcbSilkscreenTextWithVisibility | undefined {
   const text =
     decodeAltiumWideString(record.getDecoded("WIDESTRING")) ||
     record.getDecoded("TEXT") ||
@@ -1016,7 +1021,19 @@ function convertSilkscreenText(
     ccw_rotation: record.rotation,
     layer: mapOverlayLayer(record.layer),
     is_mirrored: record.mirrored,
+    is_visible: getSilkscreenTextVisibility(document, record),
   }
+}
+
+function getSilkscreenTextVisibility(
+  document: AltiumPcbDocument,
+  record: AltiumTextRecord,
+): boolean {
+  const component = document.getComponentForRecord(record)
+  if (!component) return true
+  if (record.isDesignator) return component.getBoolean("NAMEON") ?? true
+  if (record.isComment) return component.getBoolean("COMMENTON") ?? true
+  return true
 }
 
 function decodeAltiumWideString(raw: string | undefined): string {

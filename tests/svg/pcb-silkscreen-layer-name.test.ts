@@ -21,11 +21,18 @@ test.each([
     ].join("\n")
     const document = parseAltiumPcbDoc(source)
     const circuitJson = convertAltiumPcbDocToCircuitJson(document)
-    const silkscreenText = circuitJson
-      .filter((element) => element.type === "pcb_silkscreen_text")
-      .map((element) => element.text)
+    const silkscreenText = circuitJson.filter(
+      (element) => element.type === "pcb_silkscreen_text",
+    )
 
-    expect(silkscreenText).toEqual([displayName, `Layer: ${displayName}`])
+    expect(silkscreenText.map((element) => element.text)).toEqual([
+      displayName,
+      `Layer: ${displayName}`,
+    ])
+    for (const text of silkscreenText) {
+      expect(text.ccw_rotation).toBe(0)
+      expect(text.is_mirrored).toBeUndefined()
+    }
 
     const altiumSvg = serializeAltiumPcbToSvg(document, {
       height: 300,

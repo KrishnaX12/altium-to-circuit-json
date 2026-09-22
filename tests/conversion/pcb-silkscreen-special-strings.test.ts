@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import { AltiumTextRecord, parseAltiumPcbDoc } from "altiumts"
 import { convertAltiumPcbDocToCircuitJson } from "../../lib"
-import { resolveAltiumSpecialStrings } from "../../lib/pcb/resolve-altium-special-strings"
+import { resolveAltiumSpecialStrings } from "../../lib/pcb/text"
 
 const BOARD_RECORD =
   "|RECORD=Board|VERSION=5.0|LAYER_V8_1NAME=Top Overlay|LAYER_V8_1LAYERID=TOPOVERLAY|KIND0=0|VX0=0mil|VY0=0mil|KIND1=0|VX1=500mil|VY1=0mil|KIND2=0|VX2=500mil|VY2=500mil|KIND3=0|VX3=0mil|VY3=500mil"

@@ -18,6 +18,7 @@ import {
 import type {
   AnyCircuitElement,
   LayerRef,
+  NinePointAnchor,
   PCBKeepoutCircle,
   PcbBoard,
   PcbComponent,
@@ -25,6 +26,8 @@ import type {
   PcbCourtyardOutline,
   PcbCutout,
   PcbFabricationNoteDimension,
+  PcbFabricationNotePath,
+  PcbFabricationNoteText,
   PcbHole,
   PcbPlatedHole,
   PcbSilkscreenGraphic,
@@ -35,6 +38,8 @@ import type {
   PcbSmtPad,
   PcbTrace,
   PcbVia,
+  SourceNet,
+  SourceTrace,
 } from "circuit-json"
 import { convertAltiumCopperAreas } from "./pcb/convert-altium-copper-areas"
 import {
@@ -48,9 +53,10 @@ import { stitchConnectedAltiumPaths } from "./pcb/stitch-connected-paths"
 
 const MILS_TO_MILLIMETERS = 0.0254
 const ALTIUM_SLOT_HOLE_TYPE = 2
+const FABRICATION_NOTE_COLOR = "#ec4899"
 const BOARD_ID = "pcb_board_altium"
 const BOARD_GRAPHICS_COMPONENT_ID = "pcb_component_altium_board_graphics"
-const ALTIUM_TEXT_ANCHORS: readonly PcbSilkscreenText["anchor_alignment"][] = [
+const ALTIUM_TEXT_ANCHORS: readonly NinePointAnchor[] = [
   "top_left",
   "center_left",
   "bottom_left",
@@ -80,6 +86,9 @@ export function convertAltiumPcbDocToCircuitJson(
   options: ConvertAltiumPcbDocOptions = {},
 ): AnyCircuitElement[] {
   const elements: AnyCircuitElement[] = []
+  const netContext = createPcbNetContext(document)
+
+  elements.push(...netContext.elements)
 
   if (options.includeBoardOutline !== false) {
     elements.push(createBoard(document))
@@ -127,7 +136,11 @@ export function convertAltiumPcbDocToCircuitJson(
   }
 
   if (options.includeCopperAreas !== false) {
-    elements.push(...convertAltiumCopperAreas(document))
+    elements.push(
+      ...convertAltiumCopperAreas(document, {
+        getSourceNetId: netContext.getSourceNetId,
+      }),
+    )
   }
 
   for (const [index, record] of document.records.entries()) {
@@ -154,6 +167,15 @@ export function convertAltiumPcbDocToCircuitJson(
       continue
     }
 
+    if (
+      options.includeDimensions !== false &&
+      isExplodedDimensionGraphic(document, record)
+    ) {
+      const path = convertFabricationNotePath(record, index)
+      if (path) elements.push(path)
+      continue
+    }
+
     if (record instanceof AltiumPadRecord && options.includePads !== false) {
       const pad = convertPad(record, index)
       if (pad) elements.push(pad)
@@ -167,14 +189,14 @@ export function convertAltiumPcbDocToCircuitJson(
         const line = convertSilkscreenLine(record, index)
         if (line) elements.push(line)
       } else if (options.includeTraces !== false) {
-        const trace = convertTrack(record, index)
+        const trace = convertTrack(record, index, netContext)
         if (trace) elements.push(trace)
       }
       continue
     }
 
     if (record instanceof AltiumViaRecord && options.includeVias !== false) {
-      const via = convertVia(record, index)
+      const via = convertVia(record, index, netContext)
       if (via) elements.push(via)
       continue
     }
@@ -186,7 +208,7 @@ export function convertAltiumPcbDocToCircuitJson(
         const path = convertSilkscreenArc(record, index)
         if (path) elements.push(path)
       } else if (options.includeTraces !== false) {
-        const trace = convertArcTrack(record, index)
+        const trace = convertArcTrack(record, index, netContext)
         if (trace) elements.push(trace)
       }
       continue
@@ -194,8 +216,18 @@ export function convertAltiumPcbDocToCircuitJson(
 
     if (record instanceof AltiumTextRecord) {
       if (isCourtyardLayer(record.layer)) continue
+      if (isMechanicalLayer(record.layer)) {
+        const text = convertMechanicalText({
+          document,
+          record,
+          recordIndex: index,
+        })
+        if (text) elements.push(text)
+        continue
+      }
       if (isOverlayLayer(record.layer)) {
         if (options.includeSilkscreen === false) continue
+        if (isHiddenComponentText(document, record)) continue
         const text = convertSilkscreenText(record, index)
         if (text) elements.push(text)
       } else {
@@ -226,6 +258,54 @@ export function convertAltiumPcbDocToCircuitJson(
   }
 
   return elements
+}
+
+function isExplodedDimensionGraphic(
+  document: AltiumPcbDocument,
+  record: AltiumRecord,
+): record is AltiumTrackRecord | AltiumArcRecord {
+  if (
+    !(record instanceof AltiumTrackRecord) &&
+    !(record instanceof AltiumArcRecord)
+  ) {
+    return false
+  }
+  if (!isCourtyardLayer(getLayer(record))) return false
+
+  // EasyEDA exports dimensions as anonymous components made entirely from
+  // vector strokes on Mechanical 15 instead of native Altium Dimension
+  // records. Real component courtyards on this layer belong to top/bottom
+  // components, while these exploded dimension graphics have no PCB side.
+  return document.getComponentForRecord(record)?.side === "unknown"
+}
+
+function convertFabricationNotePath(
+  record: AltiumTrackRecord | AltiumArcRecord,
+  index: number,
+): PcbFabricationNotePath | undefined {
+  let route: AltiumPoint[]
+  if (record instanceof AltiumTrackRecord) {
+    if (!record.start || !record.end) return undefined
+    route = [record.start, record.end]
+  } else {
+    if (!record.center || !record.radiusMils) return undefined
+    route = approximateArc({
+      center: record.center,
+      radius: record.radiusMils,
+      startAngle: record.startAngle,
+      endAngle: record.endAngle,
+    })
+  }
+
+  return {
+    type: "pcb_fabrication_note_path",
+    pcb_fabrication_note_path_id: `pcb_fabrication_note_path_altium_${index}`,
+    pcb_component_id: pcbComponentIdForRecord(record),
+    layer: mapCourtyardLayer(getLayer(record)),
+    route: route.map(toMillimeterPoint),
+    stroke_width: milsToMillimeters(record.widthMils ?? 4),
+    color: FABRICATION_NOTE_COLOR,
+  }
 }
 
 function convertCircularKeepout({
@@ -304,7 +384,7 @@ function convertDimension(
     font: "tscircuit2024",
     font_size: milsToMillimeters(record.textHeightMils ?? 50),
     arrow_size: milsToMillimeters(getMeasurement(record, "ARROWSIZE") ?? 40),
-    color: "#ec4899",
+    color: FABRICATION_NOTE_COLOR,
   }
 }
 
@@ -313,7 +393,14 @@ function getDimensionText(
   measuredDistanceMils: number,
 ): string {
   const explicitText = record.getDecoded("TEXTFORMAT")?.trim()
-  if (explicitText && explicitText !== "<>") return explicitText
+  // Some files put a text-gap measurement (for example, "10mil") in
+  // TEXTFORMAT. It is not the dimension value, so derive the measured label.
+  const isMeasurementShapedFormat =
+    explicitText !== undefined &&
+    parseAltiumMeasurementToMils(explicitText) !== undefined
+  if (explicitText && explicitText !== "<>" && !isMeasurementShapedFormat) {
+    return explicitText
+  }
 
   const precision = Math.min(Math.max(record.precision ?? 2, 0), 6)
   const normalizedUnit = record.unit?.toUpperCase() ?? "MILS"
@@ -329,7 +416,8 @@ function getDimensionText(
     amount /= 1000
     unitLabel = "in"
   }
-  return `${record.prefix ?? ""}${amount.toFixed(precision)}${record.suffix ?? ` ${unitLabel}`}`
+  const suffix = record.suffix?.trim() ? record.suffix : ` ${unitLabel}`
+  return `${record.prefix ?? ""}${amount.toFixed(precision)}${suffix}`
 }
 
 function mapMechanicalLayer(layer: string | undefined): "top" | "bottom" {
@@ -486,14 +574,7 @@ function createBoard(document: AltiumPcbDocument): PcbBoard {
     getAltiumBounds(altiumOutline) ?? getFallbackPcbBounds(document.records)
   const width = Math.max(milsToMillimeters(bounds.maxX - bounds.minX), 0.1)
   const height = Math.max(milsToMillimeters(bounds.maxY - bounds.minY), 0.1)
-  const numLayers = document.board
-    ? Math.max(
-        getPcbLayerStack(document.board).entries.filter((entry) =>
-          Boolean(mapAltiumCopperLayer(entry.name ?? entry.layerId)),
-        ).length,
-        2,
-      )
-    : 2
+  const numLayers = getBoardLayerCount(document)
 
   return {
     type: "pcb_board",
@@ -509,6 +590,25 @@ function createBoard(document: AltiumPcbDocument): PcbBoard {
     num_layers: numLayers,
     material: "fr4",
   }
+}
+
+function getBoardLayerCount(document: AltiumPcbDocument): number {
+  if (!document.board) return 2
+
+  const entries = getPcbLayerStack(document.board).entries
+  const modernCopperLayerCount = entries.filter(
+    (entry) => entry.source === "v8" && entry.copperThickness !== undefined,
+  ).length
+  if (modernCopperLayerCount > 0) {
+    return Math.max(modernCopperLayerCount, 2)
+  }
+
+  return Math.max(
+    entries.filter((entry) =>
+      Boolean(mapAltiumCopperLayer(entry.name ?? entry.layerId)),
+    ).length,
+    2,
+  )
 }
 
 function getFallbackPcbBounds(records: AltiumRecord[]): {
@@ -532,18 +632,74 @@ function getFallbackPcbBounds(records: AltiumRecord[]): {
   return getAltiumBounds(points) ?? { minX: 0, minY: 0, maxX: 1000, maxY: 800 }
 }
 
+interface PcbNetContext {
+  elements: Array<SourceNet | SourceTrace>
+  getSourceNetId: (record: AltiumRecord) => string | undefined
+  getSourceTraceId: (record: AltiumRecord) => string | undefined
+}
+
+function createPcbNetContext(document: AltiumPcbDocument): PcbNetContext {
+  const sourceNetIdByAltiumNet = new Map(
+    document.nets.map((net, index) => [net, `source_net_altium_pcb_${index}`]),
+  )
+  const sourceTraceIdByAltiumNet = new Map(
+    document.nets.map((net, index) => [
+      net,
+      `source_trace_altium_pcb_${index}`,
+    ]),
+  )
+  const elements = document.nets.flatMap((net, index) => {
+    const name = net.name?.trim() || `Net ${index + 1}`
+    const sourceNetId = sourceNetIdByAltiumNet.get(net)
+    const sourceTraceId = sourceTraceIdByAltiumNet.get(net)
+    if (!sourceNetId || !sourceTraceId) return []
+
+    return [
+      {
+        type: "source_net",
+        source_net_id: sourceNetId,
+        name,
+        member_source_group_ids: [],
+      } satisfies SourceNet,
+      {
+        type: "source_trace",
+        source_trace_id: sourceTraceId,
+        connected_source_port_ids: [],
+        connected_source_net_ids: [sourceNetId],
+        name,
+        display_name: name,
+      } satisfies SourceTrace,
+    ]
+  })
+
+  return {
+    elements,
+    getSourceNetId: (record) => {
+      const net = document.getNetForRecord(record)
+      return net ? sourceNetIdByAltiumNet.get(net) : undefined
+    },
+    getSourceTraceId: (record) => {
+      const net = document.getNetForRecord(record)
+      return net ? sourceTraceIdByAltiumNet.get(net) : undefined
+    },
+  }
+}
+
 function convertTrack(
   record: AltiumTrackRecord,
   index: number,
+  netContext: PcbNetContext,
 ): PcbTrace | undefined {
   const start = record.start
   const end = record.end
   const layer = mapAltiumCopperLayer(record.layer)
   if (!start || !end || !layer) return undefined
   const width = milsToMillimeters(record.widthMils ?? 4)
+  const sourceTraceId = netContext.getSourceTraceId(record)
   return {
     type: "pcb_trace",
     pcb_trace_id: `pcb_trace_altium_${index}`,
+    ...(sourceTraceId ? { source_trace_id: sourceTraceId } : {}),
     should_round_corners: true,
     route: [
       { route_type: "wire", ...toMillimeterPoint(start), width, layer },
@@ -555,6 +711,7 @@ function convertTrack(
 function convertArcTrack(
   record: AltiumArcRecord,
   index: number,
+  netContext: PcbNetContext,
 ): PcbTrace | undefined {
   if (!record.center || !record.radiusMils) return undefined
   const layer = mapAltiumCopperLayer(record.layer)
@@ -566,10 +723,12 @@ function convertArcTrack(
     startAngle: record.startAngle,
     endAngle: record.endAngle,
   })
+  const sourceTraceId = netContext.getSourceTraceId(record)
 
   return {
     type: "pcb_trace",
     pcb_trace_id: `pcb_trace_altium_arc_${index}`,
+    ...(sourceTraceId ? { source_trace_id: sourceTraceId } : {}),
     should_round_corners: true,
     route: points.map((point) => ({
       route_type: "wire",
@@ -609,15 +768,20 @@ function convertCopperText(
 function convertVia(
   record: AltiumViaRecord,
   index: number,
+  netContext: PcbNetContext,
 ): PcbVia | undefined {
   if (!record.position) return undefined
   const startLayer = mapAltiumCopperLayer(record.startLayer) ?? "top"
   const endLayer = mapAltiumCopperLayer(record.endLayer) ?? "bottom"
   const layers = startLayer === endLayer ? [startLayer] : [startLayer, endLayer]
   const outerDiameter = milsToMillimeters(record.diameterMils ?? 20)
+  const sourceNetId = netContext.getSourceNetId(record)
+  const sourceTraceId = netContext.getSourceTraceId(record)
   return {
     type: "pcb_via",
     pcb_via_id: `pcb_via_altium_${index}`,
+    ...(sourceNetId ? { source_net_id: sourceNetId } : {}),
+    ...(sourceTraceId ? { source_trace_id: sourceTraceId } : {}),
     ...toMillimeterPoint(record.position),
     outer_diameter: outerDiameter,
     hole_diameter: milsToMillimeters(
@@ -966,6 +1130,72 @@ function convertSilkscreenText(
   }
 }
 
+function isHiddenComponentText(
+  document: AltiumPcbDocument,
+  record: AltiumTextRecord,
+): boolean {
+  const component = document.getComponentForRecord(record)
+  if (!component) return false
+
+  return (
+    (record.getBoolean("DESIGNATOR") === true &&
+      component.getBoolean("NAMEON") === false) ||
+    (record.getBoolean("COMMENT") === true &&
+      component.getBoolean("COMMENTON") === false)
+  )
+}
+
+function convertMechanicalText({
+  document,
+  record,
+  recordIndex,
+}: {
+  document: AltiumPcbDocument
+  record: AltiumTextRecord
+  recordIndex: number
+}): PcbFabricationNoteText | undefined {
+  const componentIndex = record.componentIndex
+  const component = document.getComponentForRecord(record)
+  if (!record.position || componentIndex === undefined || !component) {
+    return undefined
+  }
+
+  const sourceText =
+    decodeAltiumWideString(record.getDecoded("WIDESTRING")) || record.text
+  if (!sourceText) return undefined
+
+  const normalizedText = sourceText.trim().toUpperCase()
+  const isDesignator = normalizedText === ".DESIGNATOR"
+  const isComment = normalizedText === ".COMMENT"
+  if (isDesignator && component.getBoolean("NAMEON") === false) {
+    return undefined
+  }
+  if (isComment && component.getBoolean("COMMENTON") === false) {
+    return undefined
+  }
+
+  const text = isDesignator
+    ? component.designator
+    : isComment
+      ? component.comment
+      : sourceText
+  if (!text) return undefined
+
+  return {
+    type: "pcb_fabrication_note_text",
+    pcb_fabrication_note_text_id: `pcb_fabrication_note_text_altium_${recordIndex}`,
+    pcb_component_id: componentId(componentIndex),
+    text,
+    font: "tscircuit2024",
+    font_size: milsToMillimeters(record.heightMils ?? 30),
+    anchor_position: toMillimeterPoint(record.position),
+    anchor_alignment: mapFabricationTextAnchor(record.justification),
+    ccw_rotation: record.rotation,
+    layer: component.side === "bottom" ? "bottom" : "top",
+    color: FABRICATION_NOTE_COLOR,
+  }
+}
+
 function decodeAltiumWideString(raw: string | undefined): string {
   if (!raw) return ""
   if (!/^\d+(?:,\d+)*$/u.test(raw)) return raw
@@ -987,9 +1217,7 @@ function componentId(index: number): string {
   return `pcb_component_altium_${index}`
 }
 
-function mapTextAnchor(
-  justification: string | undefined,
-): PcbSilkscreenText["anchor_alignment"] {
+function mapTextAnchor(justification: string | undefined): NinePointAnchor {
   const numericAnchor = ALTIUM_TEXT_ANCHORS[Number(justification) - 1]
   if (numericAnchor) return numericAnchor
 
@@ -998,6 +1226,22 @@ function mapTextAnchor(
   if (normalized?.includes("RIGHT")) return "bottom_right"
   if (normalized?.includes("LEFT")) return "bottom_left"
   return "center"
+}
+
+function mapFabricationTextAnchor(
+  justification: string | undefined,
+): PcbFabricationNoteText["anchor_alignment"] {
+  const anchor = mapTextAnchor(justification)
+  return anchor === "top_left" ||
+    anchor === "top_right" ||
+    anchor === "bottom_left" ||
+    anchor === "bottom_right"
+    ? anchor
+    : "center"
+}
+
+function isMechanicalLayer(layer: string | undefined): boolean {
+  return normalizeLayer(layer).startsWith("MECHANICAL")
 }
 
 function isOverlayLayer(layer: string | undefined): boolean {

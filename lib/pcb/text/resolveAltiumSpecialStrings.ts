@@ -5,15 +5,6 @@ import {
   normalizeAltiumPcbLayerName,
 } from "altiumts"
 
-const LAYER_DISPLAY_NAMES: Record<string, string> = {
-  TOP: "Top Layer",
-  TOPLAYER: "Top Layer",
-  BOTTOM: "Bottom Layer",
-  BOTTOMLAYER: "Bottom Layer",
-  TOPOVERLAY: "Top Overlay",
-  BOTTOMOVERLAY: "Bottom Overlay",
-}
-
 export function resolveAltiumSpecialStrings({
   document,
   record,
@@ -35,7 +26,25 @@ export function resolveAltiumSpecialStrings({
       )
     : undefined
 
-  const displayName = layerEntry?.name ?? LAYER_DISPLAY_NAMES[normalizedLayer]
+  let defaultDisplayName: string | undefined
+  switch (normalizedLayer) {
+    case "TOP":
+    case "TOPLAYER":
+      defaultDisplayName = "Top Layer"
+      break
+    case "BOTTOM":
+    case "BOTTOMLAYER":
+      defaultDisplayName = "Bottom Layer"
+      break
+    case "TOPOVERLAY":
+      defaultDisplayName = "Top Overlay"
+      break
+    case "BOTTOMOVERLAY":
+      defaultDisplayName = "Bottom Overlay"
+      break
+  }
+
+  const displayName = layerEntry?.name ?? defaultDisplayName
   return sourceText.replace(
     /'?(\.[A-Za-z][A-Za-z0-9_]*)'?/gu,
     (matchedText, specialStringName: string) =>

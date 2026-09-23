@@ -4,12 +4,14 @@ import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { convertAltiumPcbDocToCircuitJson } from "../../lib"
 import { stackAltiumAndCircuitJsonSvgs } from "../helpers/stack-svg-comparison"
 
-test("resolves Top Overlay special strings", async () => {
+test("resolves overlay and copper layer names", async () => {
   const document = parseAltiumPcbDoc(
     [
-      "|RECORD=Board|VERSION=5.0|LAYER_V8_1NAME=Top Overlay|LAYER_V8_1LAYERID=TOPOVERLAY|KIND0=0|VX0=0mil|VY0=0mil|KIND1=0|VX1=700mil|VY1=0mil|KIND2=0|VX2=700mil|VY2=300mil|KIND3=0|VX3=0mil|VY3=300mil",
-      "|RECORD=Text|LAYER=TOPOVERLAY|X=350mil|Y=200mil|HEIGHT=40mil|JUSTIFICATION=5|TEXT=.Layer_Name",
-      "|RECORD=Text|LAYER=TOPOVERLAY|X=350mil|Y=100mil|HEIGHT=40mil|JUSTIFICATION=5|TEXT=Layer: '.Layer_Name'",
+      "|RECORD=Board|VERSION=5.0|KIND0=0|VX0=0mil|VY0=0mil|KIND1=0|VX1=700mil|VY1=0mil|KIND2=0|VX2=700mil|VY2=500mil|KIND3=0|VX3=0mil|VY3=500mil",
+      ...["TOPOVERLAY", "BOTTOMOVERLAY", "TOP", "BOTTOM"].map(
+        (layer, index) =>
+          `|RECORD=Text|LAYER=${layer}|X=350mil|Y=${400 - index * 100}mil|HEIGHT=40mil|JUSTIFICATION=5|TEXT=.Layer_Name`,
+      ),
     ].join("\n"),
   )
   const circuitJson = convertAltiumPcbDocToCircuitJson(document)
@@ -24,7 +26,7 @@ test("resolves Top Overlay special strings", async () => {
   const comparisonSvg = stackAltiumAndCircuitJsonSvgs({
     altiumSvg,
     circuitJsonSvg,
-    label: ".Layer_Name resolution: Top Overlay",
+    label: ".Layer_Name resolution: top/bottom overlay and copper",
   })
 
   await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)

@@ -13,5 +13,5 @@ export function mapTextAnchor(
   if (normalizedJustification?.includes("CENTER")) return "bottom_center"
   if (normalizedJustification?.includes("RIGHT")) return "bottom_right"
   if (normalizedJustification?.includes("LEFT")) return "bottom_left"
-  return "center"
+  return "bottom_left"
 }

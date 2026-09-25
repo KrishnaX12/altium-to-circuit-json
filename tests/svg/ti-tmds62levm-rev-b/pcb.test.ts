@@ -1,18 +1,15 @@
 import { expect, test } from "bun:test"
-import { parseAltiumBinaryPcbDoc, serializeAltiumPcbLayerToSvg } from "altiumts"
+import { parseAltiumBinaryPcbDoc, serializeAltiumPcbToSvg } from "altiumts"
 import { any_circuit_element } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { convertAltiumPcbDocToCircuitJson } from "../../../lib"
 import { TI_TMDS62LEVM_PCB_FILENAME } from "../../../scripts/references/reference-manifest"
-import {
-  filterCircuitJsonToCopperLayer,
-  getPcbBoardViewport,
-} from "../../helpers/filter-pcb-layer"
+import { getPcbBoardViewport } from "../../helpers/filter-pcb-layer"
 import { readReferenceBytes } from "../../helpers/read-reference"
 import { stackAltiumAndCircuitJsonSvgs } from "../../helpers/stack-svg-comparison"
 
 test(
-  "TI TMDS62LEVM Rev. B PCB top copper",
+  "TI TMDS62LEVM Rev. B full PCB top view",
   async () => {
     const source = await readReferenceBytes(TI_TMDS62LEVM_PCB_FILENAME)
     const document = parseAltiumBinaryPcbDoc(source)
@@ -41,21 +38,30 @@ test(
       ),
     ).toBe(true)
 
-    const topCopperCircuitJson = filterCircuitJsonToCopperLayer(
-      circuitJson,
-      "top",
-    )
     const boardViewport = getPcbBoardViewport(circuitJson)
     expect(boardViewport.maxX - boardViewport.minX).toBeGreaterThan(130)
     expect(boardViewport.maxY - boardViewport.minY).toBeGreaterThan(140)
-    const title = "TI TMDS62LEVM Rev. B PCB top copper"
-    const altiumSvg = serializeAltiumPcbLayerToSvg(document, "TOP", {
+    const boardBounds = document.boardGeometry.outline.bounds
+    if (!boardBounds) throw new Error("TI TMDS62LEVM PCB has no board outline")
+    const boardPadding =
+      Math.max(
+        boardBounds.maxX - boardBounds.minX,
+        boardBounds.maxY - boardBounds.minY,
+      ) * 0.05
+    const title = "TI TMDS62LEVM Rev. B full PCB top view"
+    const altiumSvg = serializeAltiumPcbToSvg(document, {
       height: 800,
-      showText: false,
+      layers: ["TOP", "TOPOVERLAY", "TOPSOLDER", "TOPPASTE", "MULTILAYER"],
       title: `${title} — altiumts source`,
+      viewBox: {
+        height: boardBounds.maxY - boardBounds.minY + 2 * boardPadding,
+        width: boardBounds.maxX - boardBounds.minX + 2 * boardPadding,
+        x: boardBounds.minX - boardPadding,
+        y: boardBounds.minY - boardPadding,
+      },
       width: 800,
     })
-    const circuitJsonSvg = convertCircuitJsonToPcbSvg(topCopperCircuitJson, {
+    const circuitJsonSvg = convertCircuitJsonToPcbSvg(circuitJson, {
       height: 800,
       layer: "top",
       matchBoardAspectRatio: true,

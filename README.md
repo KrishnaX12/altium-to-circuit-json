@@ -129,7 +129,7 @@ boards. Each is downloaded directly from its checksum-pinned TI CAD/CAE archive
 and has an Altium-to-Circuit-JSON side-by-side SVG repro.
 
 The TI SPRCAL9 / TMDS62LEVM Rev. B regression corpus includes all 57
-schematic sheets and a top-copper PCB comparison. Its large downloaded source
+schematic sheets and a full top-side PCB comparison. Its large downloaded source
 files are checksum-verified and cached in CI. To also write the complete
 converted Circuit JSON artifacts locally, run:
 

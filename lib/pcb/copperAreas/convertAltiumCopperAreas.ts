@@ -48,29 +48,27 @@ export function convertAltiumCopperAreas(
       if (polygonIndex === undefined && cutoutGeometry.holes.length > 0) {
         continue
       }
-      const polygons =
+      const candidatePolygons =
         polygonIndex === undefined
-          ? document.polygons.filter((polygon) => {
-              if (
-                record.layer !== polygon.layer &&
-                record.layer !== "MULTILAYER"
-              ) {
-                return false
-              }
-              let polygonContour = polygonContours.get(polygon)
-              if (!polygonContour) {
-                polygonContour = getPcbContour(polygon)
-                polygonContours.set(polygon, polygonContour)
-              }
-              return isContourInsideContour({
-                innerContour: cutoutGeometry.outline,
-                outerContour: polygonContour,
-              })
-            })
+          ? document.polygons
           : [document.polygons[polygonIndex]].filter(
               (polygon): polygon is AltiumPolygonRecord =>
                 polygon !== undefined,
             )
+      const polygons = candidatePolygons.filter((polygon) => {
+        if (record.layer !== polygon.layer && record.layer !== "MULTILAYER") {
+          return false
+        }
+        let polygonContour = polygonContours.get(polygon)
+        if (!polygonContour) {
+          polygonContour = getPcbContour(polygon)
+          polygonContours.set(polygon, polygonContour)
+        }
+        return isContourInsideContour({
+          innerContour: cutoutGeometry.outline,
+          outerContour: polygonContour,
+        })
+      })
       for (const polygon of polygons) {
         const cutouts = cutoutsByPolygon.get(polygon) ?? []
         cutouts.push(record)

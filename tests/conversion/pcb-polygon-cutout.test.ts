@@ -48,6 +48,20 @@ test("uses a linked copper region without duplicating the polygon", () => {
   expect(pours[0]).toMatchObject({ shape: "brep", layer: "top" })
 })
 
+test("ignores a linked cutout outside its polygon", () => {
+  const outsideCutoutRecord =
+    "|RECORD=Region|POLYGON=0|LAYER=TOP|REGIONKIND=POLYGON_CUTOUT|VX0=4600mil|VY0=2000mil|VX1=4800mil|VY1=2000mil|VX2=4800mil|VY2=3000mil|VX3=4600mil|VY3=3000mil"
+  const document = parseAltiumPcbDoc(
+    [boardRecord, polygonRecord, outsideCutoutRecord].join("\n"),
+  )
+  const pours = convertAltiumPcbDocToCircuitJson(document).filter(
+    (element) => element.type === "pcb_copper_pour",
+  )
+
+  expect(pours).toHaveLength(1)
+  expect(pours[0]).toMatchObject({ shape: "polygon", layer: "top" })
+})
+
 test("does not make a hole from a cutout touching a concave polygon", () => {
   const concavePolygonRecord =
     "|RECORD=Polygon|LAYER=TOP|VX0=0mil|VY0=0mil|VX1=10mil|VY1=0mil|VX2=10mil|VY2=10mil|VX3=6mil|VY3=10mil|VX4=6mil|VY4=4mil|VX5=4mil|VY5=4mil|VX6=4mil|VY6=10mil|VX7=0mil|VY7=10mil"

@@ -1,5 +1,9 @@
 import type { AltiumPoint, AltiumRecord } from "altiumts"
-import { type CardinalDirection, getLocation } from "../geometry"
+import {
+  type CardinalDirection,
+  getCoordinateOrFallback,
+  getLocation,
+} from "../geometry"
 import type { SchematicSegment } from "../model"
 import { VECTOR_BY_DIRECTION } from "./constants"
 import { doesPointTouchWireEndpoint } from "./doesPointTouchWireEndpoint"
@@ -15,7 +19,10 @@ export function getPortConnectionGeometry(
 
   const originToExtremity = getRecordDirection(record)
   const directionVector = VECTOR_BY_DIRECTION[originToExtremity]
-  const width = Math.max(record.getNumber("WIDTH") ?? 16, 0)
+  const width = Math.max(
+    getCoordinateOrFallback({ record, key: "WIDTH", fallback: 16 }),
+    0,
+  )
   const extremity = {
     x: origin.x + directionVector.x * width,
     y: origin.y + directionVector.y * width,

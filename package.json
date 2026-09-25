@@ -46,7 +46,7 @@
     "vercel-build": "bun run build:site"
   },
   "dependencies": {
-    "altiumts": "github:tscircuit/altiumts#902194b1aa4627f229f82660b06967feb870e334",
+    "altiumts": "github:tscircuit/altiumts#805a237d08987327a03af9b3f6a99f562a16958b",
     "circuit-json": "^0.0.475",
     "format-si-unit": "^0.0.11",
     "schematic-symbols": "^0.0.238",

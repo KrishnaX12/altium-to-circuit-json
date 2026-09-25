@@ -1,8 +1,9 @@
-import type { AltiumPoint, AltiumRecord } from "altiumts"
-import { getCoordinate } from "./getCoordinate"
+import {
+  type AltiumPoint,
+  type AltiumRecord,
+  getSchematicPoint,
+} from "altiumts"
 
 export function getCorner(record: AltiumRecord): AltiumPoint | undefined {
-  const x = getCoordinate(record, "CORNER.X")
-  const y = getCoordinate(record, "CORNER.Y")
-  return x === undefined || y === undefined ? undefined : { x, y }
+  return getSchematicPoint(record, { xKey: "CORNER.X", yKey: "CORNER.Y" })
 }

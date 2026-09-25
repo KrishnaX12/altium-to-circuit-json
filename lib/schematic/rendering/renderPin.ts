@@ -1,7 +1,7 @@
 import type { AltiumRecord } from "altiumts"
 import type { AnyCircuitElement } from "circuit-json"
 import type { SchematicContext } from "../document"
-import { getLocation } from "../geometry"
+import { getCoordinateOrFallback, getLocation } from "../geometry"
 import { createDirectText, createLine } from "../text"
 import type { SymbolRenderOptions } from "./types"
 
@@ -35,7 +35,7 @@ export function renderPin({
     { x: 0, y: -1 },
   ][orientation] ?? { x: 1, y: 0 }
   const length = Math.max(
-    Number(record.getCaseInsensitive("PINLENGTH") ?? 10),
+    getCoordinateOrFallback({ record, key: "PINLENGTH", fallback: 10 }),
     1,
   )
   const end = {

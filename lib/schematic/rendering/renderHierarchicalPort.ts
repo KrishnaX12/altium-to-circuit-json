@@ -1,7 +1,7 @@
 import type { AltiumRecord } from "altiumts"
 import type { AnyCircuitElement, SchematicPath } from "circuit-json"
 import { SCHEMATIC_SHEET_ID, type SchematicContext } from "../document"
-import { getLocation, scalePoint } from "../geometry"
+import { getCoordinateOrFallback, getLocation, scalePoint } from "../geometry"
 import { altiumColorToCss, createDirectText, getFontSize } from "../text"
 import type { SymbolRenderOptions } from "./types"
 
@@ -20,8 +20,14 @@ export function renderHierarchicalPort({
 }): AnyCircuitElement[] {
   const location = getLocation(record)
   if (!location) return []
-  const width = Math.max(Number(record.getCaseInsensitive("WIDTH") ?? 16), 10)
-  const height = Math.max(Number(record.getCaseInsensitive("HEIGHT") ?? 10), 4)
+  const width = Math.max(
+    getCoordinateOrFallback({ record, key: "WIDTH", fallback: 16 }),
+    10,
+  )
+  const height = Math.max(
+    getCoordinateOrFallback({ record, key: "HEIGHT", fallback: 10 }),
+    4,
+  )
   const halfHeight = height / 2
   const pointDepth = Math.min(width * 0.22, height)
   const ioType = Number(record.getCaseInsensitive("IOTYPE") ?? 0)

@@ -9,6 +9,7 @@ import {
 import {
   type Bounds,
   getBoundsForPoints,
+  getCoordinateOrFallback,
   getCorner,
   getLocation,
   getRectangle,
@@ -38,8 +39,16 @@ export function getComponentBodyBounds(
     if (location && corner) points.push(location, corner)
     points.push(...getSchematicRecordPoints(record))
     if (record instanceof AltiumSchEllipseRecord && location) {
-      const radiusX = Math.abs(record.getNumber("RADIUS") ?? 0)
-      const radiusY = Math.abs(record.getNumber("SECONDARYRADIUS") ?? radiusX)
+      const radiusX = Math.abs(
+        getCoordinateOrFallback({ record, key: "RADIUS", fallback: 0 }),
+      )
+      const radiusY = Math.abs(
+        getCoordinateOrFallback({
+          record,
+          key: "SECONDARYRADIUS",
+          fallback: radiusX,
+        }),
+      )
       points.push(
         { x: location.x - radiusX, y: location.y - radiusY },
         { x: location.x + radiusX, y: location.y + radiusY },

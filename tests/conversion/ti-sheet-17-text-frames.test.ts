@@ -35,13 +35,14 @@ test("TI sheet 17 converts components, ports, nets, and text idiomatically", asy
       ),
   )
 
+  // TEXTMARGIN_FRAC=5 is 0.00005 schematic units, so the note fits wider lines.
   expect(dNoteLines.map((element) => element.text)).toEqual([
     "D-Note:-",
-    "PORz inputs have slew rate requirements specified. When",
-    "PMIC nRSTOUT is connected to PORz. Adjust the pull-up to",
-    "minimize the rise time (100-200 ns) when using an open drain",
-    "output. PORz is fail-safe and 3.3 V tolerant. The PORz input",
-    "can to 1.8 V or 3.3 V.",
+    "PORz inputs have slew rate requirements specified. When PMIC",
+    "nRSTOUT is connected to PORz. Adjust the pull-up to minimize",
+    "the rise time (100-200 ns) when using an open drain output.",
+    "PORz is fail-safe and 3.3 V tolerant. The PORz input can to 1.8",
+    "V or 3.3 V.",
   ])
   expect(
     circuitJson.find(

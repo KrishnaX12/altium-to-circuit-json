@@ -1,7 +1,6 @@
 export * from "./getAveragePoint"
 export * from "./getBoundsCenter"
 export * from "./getBoundsForPoints"
-export * from "./getCoordinate"
 export * from "./getCoordinateOrFallback"
 export * from "./getCorner"
 export * from "./getDirectionForVector"

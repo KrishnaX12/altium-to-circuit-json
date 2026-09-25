@@ -1,0 +1,14 @@
+<svg width="1624" height="799.9999999999999" viewBox="0 0 1624 799.9999999999999" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-label="Copper polygon with linked cutout: altiumts source on left, Circuit JSON on right" role="img">
+  <g transform="translate(0, 0) scale(0.14953271028037382, 0.14953271028037382) translate(0, 0)">
+    <title>Altium PCB</title>
+  <rect width="5350" height="5350" fill="#071a16" x="0" y="0"/>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <polygon data-record="BoardOutline" points="175,5175 5175,5175 5175,175 175,175 175,5175" fill="#123d32" stroke="#6ee7b7" stroke-width="3"/>
+    <polygon data-record="Polygon" data-layer="TOP" points="675,4675 4675,4675 4675,675 675,675 675,4675" fill="#ef4444" fill-opacity="0.32" stroke="#ef4444" stroke-width="1.5"/>
+    <path data-record="Region" data-layer="TOP" data-region-kind="POLYGON_CUTOUT" d="M 2175 3175 L 3175 3175 L 3175 2175 L 2175 2175 L 2175 3175 Z" fill="#123d32" fill-rule="evenodd" stroke="#123d32" stroke-width="1.5"/>
+  </g>
+  </g>
+  <g transform="translate(823.9999999999999, 99.99999999999994) scale(1, 1) translate(0, 0)">
+    <style></style><rect class="boundary" x="0" y="0" fill="#000" width="800" height="600" data-type="pcb_background" data-pcb-layer="global"/><rect class="pcb-boundary" fill="none" stroke="#fff" stroke-width="0.3" x="104.65116279069767" y="4.65116279069764" width="590.6976744186047" height="590.6976744186047" data-type="pcb_boundary" data-pcb-layer="global"/><path class="pcb-board" d="M 104.65116279069767 595.3488372093024 L 695.3488372093024 595.3488372093024 L 695.3488372093024 4.65116279069764 L 104.65116279069767 4.65116279069764 L 104.65116279069767 595.3488372093024 Z" fill="none" stroke="rgba(255, 255, 255, 0.5)" stroke-width="0.4651162790697675" data-type="pcb_board" data-pcb-layer="board"/>
+  </g>
+</svg>

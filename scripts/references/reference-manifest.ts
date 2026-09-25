@@ -50,6 +50,13 @@ export const TI_POWER_REFERENCE_PCB_FILENAMES = {
 
 export const DIRECT_REFERENCES: DirectReferenceSpec[] = [
   {
+    filename: "ch582.PcbDoc",
+    sha256: "dcf82249e19f9a58f3874e9c56509bab42f3fdf00dc3dd0d52ba9a4f4aeb0649",
+    source:
+      "iot-lorawan/CH582_PCB_SCH@b65bce802295c6c40413c5bc3ea54682820619c1 (MIT)",
+    url: "https://raw.githubusercontent.com/iot-lorawan/CH582_PCB_SCH/b65bce802295c6c40413c5bc3ea54682820619c1/PCB_ch582_2022-06-16.pcbdoc",
+  },
+  {
     filename: "simplefocmini-2024-04-26.PcbDoc",
     sha256: "8328cebe97ba8623fb2b707490e3473c6f7dc13fb0502b596b0e40c7e1613d24",
     source:

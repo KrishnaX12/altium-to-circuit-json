@@ -1,21 +1,23 @@
 import type { AltiumTrackRecord } from "altiumts"
 import type { PcbTrace } from "circuit-json"
 import { milsToMillimeters, toMillimeterPoint } from "../geometry"
-import { mapAltiumCopperLayer } from "../layers"
+import type { PcbCopperLayerMap } from "../layers"
 import type { PcbNetContext } from "../model"
 
 export function convertPcbTrack({
+  layerMap,
   record,
   recordIndex,
   netContext,
 }: {
+  layerMap: PcbCopperLayerMap
   record: AltiumTrackRecord
   recordIndex: number
   netContext: PcbNetContext
 }): PcbTrace | undefined {
   const start = record.start
   const end = record.end
-  const layer = mapAltiumCopperLayer(record.layer)
+  const layer = layerMap.getLayer(record.layer)
   if (!start || !end || !layer) return undefined
   const width = milsToMillimeters(record.widthMils ?? 4)
   const sourceTraceId = netContext.getSourceTraceId(record)

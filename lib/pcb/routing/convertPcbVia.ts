@@ -1,21 +1,28 @@
 import type { AltiumViaRecord } from "altiumts"
 import type { PcbVia } from "circuit-json"
 import { milsToMillimeters, toMillimeterPoint } from "../geometry"
-import { mapAltiumCopperLayer } from "../layers"
+import type { PcbCopperLayerMap } from "../layers"
 import type { PcbNetContext } from "../model"
 
 export function convertPcbVia({
+  layerMap,
   record,
   recordIndex,
   netContext,
 }: {
+  layerMap: PcbCopperLayerMap
   record: AltiumViaRecord
   recordIndex: number
   netContext: PcbNetContext
 }): PcbVia | undefined {
   if (!record.position) return undefined
-  const startLayer = mapAltiumCopperLayer(record.startLayer) ?? "top"
-  const endLayer = mapAltiumCopperLayer(record.endLayer) ?? "bottom"
+  const startLayer = layerMap.getLayer(record.startLayer ?? "TOP")
+  const endLayer = layerMap.getLayer(record.endLayer ?? "BOTTOM")
+  if (!startLayer || !endLayer) {
+    throw new Error(
+      `Invalid via copper layer span: ${record.startLayer} → ${record.endLayer}`,
+    )
+  }
   const layers = startLayer === endLayer ? [startLayer] : [startLayer, endLayer]
   const outerDiameter = milsToMillimeters(record.diameterMils ?? 20)
   const sourceNetId = netContext.getSourceNetId(record)

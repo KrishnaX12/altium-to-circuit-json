@@ -1,14 +1,14 @@
-import type { AltiumArcRecord, AltiumPcbDocument } from "altiumts"
+import type { AltiumArcRecord } from "altiumts"
 import type { PCBKeepoutCircle } from "circuit-json"
 import { milsToMillimeters, toMillimeterPoint } from "../geometry"
-import { getCopperLayers } from "./getCopperLayers"
+import type { PcbCopperLayerMap } from "../layers"
 
 export function convertPcbCircularKeepout({
-  document,
+  layerMap,
   record,
   recordIndex,
 }: {
-  document: AltiumPcbDocument
+  layerMap: PcbCopperLayerMap
   record: AltiumArcRecord
   recordIndex: number
 }): PCBKeepoutCircle | undefined {
@@ -24,7 +24,7 @@ export function convertPcbCircularKeepout({
     shape: "circle",
     center: toMillimeterPoint(center),
     radius: milsToMillimeters(radiusMils + (record.widthMils ?? 0) / 2),
-    layers: getCopperLayers(document),
+    layers: layerMap.layers,
     description: "Altium circular keepout",
   }
 }

@@ -12,7 +12,7 @@ test.each([
   ["MID1", "inner1"],
 ] as const)("converts wrapped copper arcs on %s", (altiumLayer, layer) => {
   const document = parseAltiumPcbDoc(
-    `|RECORD=Board|VERSION=5.0\n|RECORD=Arc|LAYER=${altiumLayer}|${arcGeometry}`,
+    `|RECORD=Board|VERSION=5.0|LAYER1NAME=Top Layer|LAYER1NEXT=2|LAYER2NAME=MidLayer1|LAYER2NEXT=3|LAYER3NAME=MidLayer2|LAYER3NEXT=32|LAYER32NAME=Bottom Layer|LAYER32NEXT=0\n|RECORD=Arc|LAYER=${altiumLayer}|${arcGeometry}`,
   )
   const circuitJson = convertAltiumPcbDocToCircuitJson(document)
   const traces = circuitJson.filter((element) => element.type === "pcb_trace")

@@ -1,13 +1,15 @@
 import { type AltiumRegionRecord, getPcbRegionGeometry } from "altiumts"
 import type { PcbCopperPour } from "circuit-json"
-import { mapAltiumCopperLayer } from "../layers"
+import type { PcbCopperLayerMap } from "../layers"
 import { contourToPoints } from "./contourToPoints"
 
 export function convertCopperRegion({
+  layerMap,
   record,
   recordIndex,
   sourceNetId,
 }: {
+  layerMap: PcbCopperLayerMap
   record: AltiumRegionRecord
   recordIndex: number
   sourceNetId: string | undefined
@@ -15,7 +17,7 @@ export function convertCopperRegion({
   if (record.recordKind !== "Region" || record.regionKind !== "COPPER") {
     return []
   }
-  const layer = mapAltiumCopperLayer(record.layer)
+  const layer = layerMap.getLayer(record.layer)
   if (!layer) return []
 
   const geometry = getPcbRegionGeometry(record)

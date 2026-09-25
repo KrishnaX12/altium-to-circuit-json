@@ -69,6 +69,13 @@ PCB conversion currently emits:
 - top and bottom silkscreen lines, arcs, fills, and text; and
 - Altium mil coordinates converted to millimeters.
 
+Copper layers follow the board's physical stack order, including interleaved
+signal and plane layers. Layer IDs and custom stack names resolve to the same
+Circuit JSON layer. The current schema supports up to ten copper layers
+(`top`, `inner1`–`inner8`, `bottom`). Conversion throws for larger or ambiguous
+stacks and for copper layers absent from the stack. Documents without stack
+information support outer-layer copper only.
+
 Schematic conversion currently emits:
 
 - a Circuit JSON `schematic_sheet`, with imported geometry page-fitted and

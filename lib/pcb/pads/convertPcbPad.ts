@@ -1,14 +1,16 @@
 import { type AltiumPadRecord, getAltiumPcbPadGeometry } from "altiumts"
 import type { PcbHole, PcbPlatedHole, PcbSmtPad } from "circuit-json"
 import { createOctagonPoints, milsToMillimeters } from "../geometry"
-import { mapAltiumCopperLayer } from "../layers"
+import type { PcbCopperLayerMap } from "../layers"
 import { convertThroughHolePad } from "./convertThroughHolePad"
 import { normalizeShape } from "./normalizeShape"
 
 export function convertPcbPad({
+  layerMap,
   record,
   recordIndex,
 }: {
+  layerMap: PcbCopperLayerMap
   record: AltiumPadRecord
   recordIndex: number
 }): PcbSmtPad | PcbPlatedHole | PcbHole | undefined {
@@ -56,7 +58,7 @@ export function convertPcbPad({
     })
   }
 
-  const layer = mapAltiumCopperLayer(record.layer)
+  const layer = layerMap.getLayer(record.layer)
   if (!layer) return undefined
   const base = {
     type: "pcb_smtpad" as const,

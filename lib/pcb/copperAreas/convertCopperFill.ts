@@ -1,18 +1,20 @@
 import type { AltiumFillRecord } from "altiumts"
 import type { PcbCopperPour } from "circuit-json"
 import { milsToMillimeters } from "../geometry"
-import { mapAltiumCopperLayer } from "../layers"
+import type { PcbCopperLayerMap } from "../layers"
 
 export function convertCopperFill({
+  layerMap,
   record,
   recordIndex,
   sourceNetId,
 }: {
+  layerMap: PcbCopperLayerMap
   record: AltiumFillRecord
   recordIndex: number
   sourceNetId: string | undefined
 }): PcbCopperPour[] {
-  const layer = mapAltiumCopperLayer(record.layer)
+  const layer = layerMap.getLayer(record.layer)
   if (!layer || !record.bounds) return []
 
   const width = milsToMillimeters(record.bounds.maxX - record.bounds.minX)

@@ -5,6 +5,7 @@ export function convertPcbCopperAreas(context: PcbConversionContext): void {
   if (context.options.includeCopperAreas === false) return
   context.elements.push(
     ...convertAltiumCopperAreas(context.document, {
+      layerMap: context.layerMap,
       getSourceNetId: context.netContext.getSourceNetId,
     }),
   )

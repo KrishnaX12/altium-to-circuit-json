@@ -1,18 +1,20 @@
 import { type AltiumPolygonRecord, getPcbContour } from "altiumts"
 import type { PcbCopperPour } from "circuit-json"
-import { mapAltiumCopperLayer } from "../layers"
+import type { PcbCopperLayerMap } from "../layers"
 import { contourToPoints } from "./contourToPoints"
 
 export function convertCopperPolygon({
   polygonIndex,
+  layerMap,
   record,
   sourceNetId,
 }: {
   polygonIndex: number
+  layerMap: PcbCopperLayerMap
   record: AltiumPolygonRecord
   sourceNetId: string | undefined
 }): PcbCopperPour[] {
-  const layer = mapAltiumCopperLayer(record.layer)
+  const layer = layerMap.getLayer(record.layer)
   if (!layer) return []
   const points = contourToPoints(getPcbContour(record))
   if (points.length < 3) return []

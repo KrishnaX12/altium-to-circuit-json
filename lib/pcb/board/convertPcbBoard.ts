@@ -6,7 +6,7 @@ import { createBoard } from "./createBoard"
 
 export function convertPcbBoard(context: PcbConversionContext): void {
   if (context.options.includeBoardOutline === false) return
-  context.elements.push(createBoard(context.document))
+  context.elements.push(createBoard(context))
   for (const [
     index,
     cutout,

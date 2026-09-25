@@ -35,7 +35,8 @@ import {
 import { convertPcbCopperText, convertPcbMechanicalText } from "../text"
 
 export function convertPcbRecords(context: PcbConversionContext): void {
-  const { document, elements, netContext, options } = context
+  const { document, elements, layerMap, netContext, options } = context
+  const routing = { layerMap, netContext }
   for (const [recordIndex, record] of document.records.entries()) {
     if (
       record instanceof AltiumArcRecord &&
@@ -43,7 +44,7 @@ export function convertPcbRecords(context: PcbConversionContext): void {
       options.includeKeepouts !== false
     ) {
       const keepout = convertPcbCircularKeepout({
-        document,
+        layerMap,
         record,
         recordIndex,
       })
@@ -51,10 +52,8 @@ export function convertPcbRecords(context: PcbConversionContext): void {
       continue
     }
 
-    if (
-      record instanceof AltiumDimensionRecord &&
-      options.includeDimensions !== false
-    ) {
+    if (record instanceof AltiumDimensionRecord) {
+      if (options.includeDimensions === false) continue
       const dimension = convertPcbDimension({ record, recordIndex })
       if (dimension) elements.push(dimension)
       continue
@@ -70,7 +69,7 @@ export function convertPcbRecords(context: PcbConversionContext): void {
     }
 
     if (record instanceof AltiumPadRecord && options.includePads !== false) {
-      const pad = convertPcbPad({ record, recordIndex })
+      const pad = convertPcbPad({ layerMap, record, recordIndex })
       if (pad) elements.push(pad)
       continue
     }
@@ -82,14 +81,18 @@ export function convertPcbRecords(context: PcbConversionContext): void {
         const line = convertPcbSilkscreenLine({ record, recordIndex })
         if (line) elements.push(line)
       } else if (options.includeTraces !== false) {
-        const trace = convertPcbTrack({ record, recordIndex, netContext })
+        const trace = convertPcbTrack({
+          ...routing,
+          record,
+          recordIndex,
+        })
         if (trace) elements.push(trace)
       }
       continue
     }
 
     if (record instanceof AltiumViaRecord && options.includeVias !== false) {
-      const via = convertPcbVia({ record, recordIndex, netContext })
+      const via = convertPcbVia({ ...routing, record, recordIndex })
       if (via) elements.push(via)
       continue
     }
@@ -101,7 +104,11 @@ export function convertPcbRecords(context: PcbConversionContext): void {
         const path = convertPcbSilkscreenArc({ record, recordIndex })
         if (path) elements.push(path)
       } else if (options.includeTraces !== false) {
-        const trace = convertPcbArcTrack({ record, recordIndex, netContext })
+        const trace = convertPcbArcTrack({
+          ...routing,
+          record,
+          recordIndex,
+        })
         if (trace) elements.push(trace)
       }
       continue
@@ -124,7 +131,7 @@ export function convertPcbRecords(context: PcbConversionContext): void {
         const text = convertPcbSilkscreenText({ record, recordIndex })
         if (text) elements.push(text)
       } else {
-        const text = convertPcbCopperText({ record, recordIndex })
+        const text = convertPcbCopperText({ layerMap, record, recordIndex })
         if (text) elements.push(text)
       }
       continue

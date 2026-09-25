@@ -1,20 +1,22 @@
 import { type AltiumArcRecord, approximateAltiumArc } from "altiumts"
 import type { PcbTrace } from "circuit-json"
 import { milsToMillimeters, toMillimeterPoint } from "../geometry"
-import { mapAltiumCopperLayer } from "../layers"
+import type { PcbCopperLayerMap } from "../layers"
 import type { PcbNetContext } from "../model"
 
 export function convertPcbArcTrack({
+  layerMap,
   record,
   recordIndex,
   netContext,
 }: {
+  layerMap: PcbCopperLayerMap
   record: AltiumArcRecord
   recordIndex: number
   netContext: PcbNetContext
 }): PcbTrace | undefined {
   if (!record.center || !record.radiusMils) return undefined
-  const layer = mapAltiumCopperLayer(record.layer)
+  const layer = layerMap.getLayer(record.layer)
   if (!layer) return undefined
   const width = milsToMillimeters(record.widthMils ?? 4)
   const points = approximateAltiumArc({

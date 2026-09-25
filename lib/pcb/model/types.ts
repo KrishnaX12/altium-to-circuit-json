@@ -1,5 +1,6 @@
 import type { AltiumPcbDocument, AltiumRecord } from "altiumts"
 import type { AnyCircuitElement, SourceNet, SourceTrace } from "circuit-json"
+import type { PcbCopperLayerMap } from "../layers"
 
 export interface ConvertAltiumPcbDocOptions {
   includeBoardOutline?: boolean
@@ -23,6 +24,7 @@ export interface PcbNetContext {
 export interface PcbConversionContext {
   document: AltiumPcbDocument
   elements: AnyCircuitElement[]
+  layerMap: PcbCopperLayerMap
   netContext: PcbNetContext
   options: ConvertAltiumPcbDocOptions
 }

@@ -41,6 +41,19 @@ test("preserves unknown special strings", () => {
   expect(convertSilkscreenText([".Foo"])).toEqual([".Foo"])
 })
 
+test("does not resolve a special string suffix in ordinary text", () => {
+  expect(convertSilkscreenText(["file.Layer_Name"])).toEqual([
+    "file.Layer_Name",
+  ])
+})
+
+test("preserves unbalanced special string quotes", () => {
+  expect(convertSilkscreenText(["'.Layer_Name", ".Layer_Name'"])).toEqual([
+    "'.Layer_Name",
+    ".Layer_Name'",
+  ])
+})
+
 test.each([
   { layer: "TOP", displayName: "Top Layer", circuitLayer: "top" },
   { layer: "BOTTOM", displayName: "Bottom Layer", circuitLayer: "bottom" },
@@ -52,7 +65,16 @@ test.each([
     const document = parseAltiumPcbDoc(
       [
         "|RECORD=Board|VERSION=5.0",
-        ...[".Layer_Name", "Layer: '.Layer_Name'", ".Foo", ".1uF", "Label"].map(
+        ...[
+          ".Layer_Name",
+          "Layer: '.Layer_Name'",
+          "file.Layer_Name",
+          "'.Layer_Name",
+          ".Layer_Name'",
+          ".Foo",
+          ".1uF",
+          "Label",
+        ].map(
           (text) =>
             `|RECORD=Text|LAYER=${layer}|X=100mil|Y=200mil|HEIGHT=40mil|ROTATION=90|MIRROR=TRUE|TEXT=${text}`,
         ),
@@ -64,6 +86,9 @@ test.each([
     expect(texts.map((text) => text.text)).toEqual([
       displayName,
       `Layer: ${displayName}`,
+      "file.Layer_Name",
+      "'.Layer_Name",
+      ".Layer_Name'",
       ".Foo",
       ".1uF",
       "Label",
@@ -120,7 +145,6 @@ test("preserves the layer placeholder when no display name is available", () => 
     resolveAltiumSpecialStrings({
       document,
       record,
-      sourceText: record.text ?? "",
     }),
   ).toBe(".Layer_Name")
 })

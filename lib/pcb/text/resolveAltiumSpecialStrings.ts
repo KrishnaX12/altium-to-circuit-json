@@ -8,12 +8,11 @@ import {
 export function resolveAltiumSpecialStrings({
   document,
   record,
-  sourceText,
 }: {
   document: AltiumPcbDocument
   record: AltiumTextRecord
-  sourceText: string
 }): string {
+  const sourceText = record.text ?? ""
   if (!record.layer) return sourceText
   const normalizedLayer = normalizeAltiumPcbLayerName(record.layer)
   const layerEntry = document.board
@@ -46,10 +45,14 @@ export function resolveAltiumSpecialStrings({
 
   const displayName = layerEntry?.name ?? defaultDisplayName
   return sourceText.replace(
-    /'?(\.[A-Za-z][A-Za-z0-9_]*)'?/gu,
-    (matchedText, specialStringName: string) =>
-      specialStringName.toUpperCase() === ".LAYER_NAME"
+    /'\.[A-Za-z][A-Za-z0-9_]*'|(?<![A-Za-z0-9_'])\.[A-Za-z][A-Za-z0-9_]*(?![A-Za-z0-9_'])/gu,
+    (matchedText) => {
+      const specialStringName = matchedText.startsWith("'")
+        ? matchedText.slice(1, -1)
+        : matchedText
+      return specialStringName.toUpperCase() === ".LAYER_NAME"
         ? (displayName ?? matchedText)
-        : matchedText,
+        : matchedText
+    },
   )
 }

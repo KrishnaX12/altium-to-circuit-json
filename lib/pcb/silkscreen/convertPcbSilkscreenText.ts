@@ -22,7 +22,6 @@ export function convertPcbSilkscreenText({
     text: resolveAltiumSpecialStrings({
       document,
       record,
-      sourceText: record.text,
     }),
     font: "tscircuit2024",
     font_size: milsToMillimeters(record.heightMils ?? 30),
